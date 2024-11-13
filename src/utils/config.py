@@ -2,12 +2,28 @@ import json
 from typing import Dict, Any
 from pathlib import Path
 
+try:
+    import streamlit as st
+except ImportError:
+    st = None
+
 class ConfigManager:
     def __init__(self, config_file: str = 'config.json'):
         self.config_file = config_file
 
     def load_config(self) -> Dict[str, Any]:
-        """Đọc file config"""
+        """Đọc config từ file hoặc streamlit secrets"""
+        # Thử đọc từ Streamlit secrets nếu đang chạy trên Streamlit Cloud
+        if st is not None and hasattr(st, 'secrets') and 'anthropic' in st.secrets:
+            return {
+                "anthropic_api_key": st.secrets["anthropic"]["api_key"],
+                # Thêm các config mặc định khác nếu cần
+                "model": "claude-2",
+                "temperature": 0.7,
+                "max_tokens": 1000
+            }
+        
+        # Nếu không có Streamlit secrets, đọc từ file config.json
         try:
             with open(self.config_file, 'r') as f:
                 return json.load(f)
@@ -18,8 +34,10 @@ class ConfigManager:
 
     def save_config(self, config: Dict[str, Any]) -> None:
         """Lưu config vào file"""
-        with open(self.config_file, 'w', encoding='utf-8') as f:
-            json.dump(config, f, ensure_ascii=False, indent=2)
+        # Chỉ lưu vào file khi chạy local
+        if st is None or not hasattr(st, 'secrets'):
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                json.dump(config, f, ensure_ascii=False, indent=2)
 
 class SystemPromptsManager:
     def __init__(self, prompts_file: str = 'src/data/system_prompts.json'):
