@@ -13,24 +13,33 @@ class ConfigManager:
 
     def load_config(self) -> Dict[str, Any]:
         """Đọc config từ file hoặc streamlit secrets"""
-        # Thử đọc từ Streamlit secrets nếu đang chạy trên Streamlit Cloud
+        # Thử đọc từ file config.json trước
+        try:
+            with open(self.config_file, 'r') as f:
+                config = json.load(f)
+                # Kiểm tra cả key chữ hoa và chữ thường
+                api_key = config.get('ANTHROPIC_API_KEY') or config.get('anthropic_api_key')
+                if api_key:
+                    return {
+                        "anthropic_api_key": api_key,
+                        "model": config.get("model", "claude-2"),
+                        "temperature": config.get("temperature", 0.7),
+                        "max_tokens": config.get("max_tokens", 1000)
+                    }
+                
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
+        # Thử đọc từ Streamlit secrets
         if st is not None and hasattr(st, 'secrets') and 'anthropic' in st.secrets:
             return {
                 "anthropic_api_key": st.secrets["anthropic"]["api_key"],
-                # Thêm các config mặc định khác nếu cần
                 "model": "claude-2",
                 "temperature": 0.7,
                 "max_tokens": 1000
             }
-        
-        # Nếu không có Streamlit secrets, đọc từ file config.json
-        try:
-            with open(self.config_file, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            raise ValueError(f"Không tìm thấy file config: {self.config_file}")
-        except json.JSONDecodeError:
-            raise ValueError(f"File config không đúng định dạng JSON: {self.config_file}")
+
+        raise ValueError(f"Không tìm thấy API key trong file {self.config_file} hoặc Streamlit secrets")
 
     def save_config(self, config: Dict[str, Any]) -> None:
         """Lưu config vào file"""

@@ -1,7 +1,7 @@
 import streamlit as st
 from typing import Callable, Dict, Any
 import json
-from src.config.settings import (
+from config.settings import (
     PAGE_TITLE,
     PAGE_ICON,
     PAGE_LAYOUT,
@@ -11,6 +11,7 @@ from src.config.settings import (
     DEFAULT_MAX_TOKENS,
     SYSTEM_PROMPTS_FILE
 )
+from utils.config import SystemPromptsManager
 
 def create_copy_button(text: str, key: str):
     """Tạo nút copy cho text"""
@@ -35,6 +36,9 @@ def create_chat_ui(chat_instance: Any):
     st.title("🤖 Mr. Lễ AI")
     st.markdown("Chương trình được tạo bởi Mr. Lễ AI - Với sự hỗ trợ của ClaudeAI")
 
+    # Khởi tạo SystemPromptsManager
+    prompts_manager = SystemPromptsManager()
+
     # Sidebar cho cài đặt và quản lý system prompts
     with st.sidebar:
         st.header("⚙️ Cài đặt")
@@ -42,14 +46,8 @@ def create_chat_ui(chat_instance: Any):
         # Quản lý System Prompts
         st.subheader("🤖 Quản lý Chatbots")
         
-        # Đọc system prompts từ file
-        try:
-            with open(SYSTEM_PROMPTS_FILE, 'r', encoding='utf-8') as f:
-                system_prompts = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            system_prompts = {
-                "Default": "You are Mr. 'Lễ đẹp trai' a helpful AI assistant. Respond in Vietnamese."
-            }
+        # Đọc system prompts
+        system_prompts = prompts_manager.load_prompts()
 
         # Chọn chatbot
         selected_bot = st.selectbox(
@@ -68,9 +66,7 @@ def create_chat_ui(chat_instance: Any):
 
         # Nút lưu thay đổi
         if st.button("💾 Lưu thay đổi"):
-            system_prompts[selected_bot] = current_prompt
-            with open(SYSTEM_PROMPTS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(system_prompts, f, ensure_ascii=False, indent=2)
+            prompts_manager.update_prompt(selected_bot, current_prompt)
             st.success("Đã lưu thay đổi!")
 
         # Tạo chatbot mới
@@ -79,9 +75,7 @@ def create_chat_ui(chat_instance: Any):
         new_bot_prompt = st.text_area("System Prompt mới", height=100)
         
         if st.button("Tạo mới") and new_bot_name and new_bot_prompt:
-            system_prompts[new_bot_name] = new_bot_prompt
-            with open(SYSTEM_PROMPTS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(system_prompts, f, ensure_ascii=False, indent=2)
+            prompts_manager.add_prompt(new_bot_name, new_bot_prompt)
             st.success(f"Đã tạo chatbot mới: {new_bot_name}")
             st.experimental_rerun()
 

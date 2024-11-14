@@ -37,10 +37,7 @@ cp config.example.json config.json
 - Mở file `config.json` và thêm API key của bạn vào:
 ```json
 {
-    "anthropic_api_key": "your-api-key-here",
-    "model": "claude-2",
-    "temperature": 0.7,
-    "max_tokens": 1000
+    "ANTHROPIC_API_KEY": "your api key here"
 }
 ```
 

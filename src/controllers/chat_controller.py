@@ -1,6 +1,6 @@
 from typing import Dict, Any
 import streamlit as st
-from src.models.chat_model import ClaudeChat
+from models.chat_model import ClaudeChat
 
 class ChatController:
     def __init__(self):

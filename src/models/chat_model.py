@@ -2,7 +2,7 @@ import json
 import anthropic
 import streamlit as st
 from typing import List, Dict
-from src.config.settings import (
+from config.settings import (
     CONFIG_FILE,
     MAX_HISTORY_MESSAGES,
     RECENT_MESSAGES_LIMIT,
@@ -11,10 +11,12 @@ from src.config.settings import (
     DEFAULT_TEMPERATURE,
     DEFAULT_SYSTEM_PROMPT
 )
+from utils.config import ConfigManager
 
 class ClaudeChat:
     def __init__(self, config_file: str = CONFIG_FILE):
         self.config_file = config_file
+        self.config_manager = ConfigManager(config_file)
         self.client = None
         if 'chat_history' not in st.session_state:
             st.session_state.chat_history = []
@@ -22,16 +24,13 @@ class ClaudeChat:
 
     def get_api_key(self) -> str:
         try:
-            with open(self.config_file, 'r') as f:
-                config = json.load(f)
-                api_key = config.get('ANTHROPIC_API_KEY')
-                if not api_key:
-                    raise ValueError(f"Không tìm thấy ANTHROPIC_API_KEY trong file {self.config_file}")
-                return api_key
-        except FileNotFoundError:
-            raise ValueError(f"Không tìm thấy file config: {self.config_file}")
-        except json.JSONDecodeError:
-            raise ValueError(f"File config không đúng định dạng JSON: {self.config_file}")
+            config = self.config_manager.load_config()
+            api_key = config.get('anthropic_api_key')
+            if not api_key:
+                raise ValueError(f"Không tìm thấy anthropic_api_key trong config")
+            return api_key
+        except Exception as e:
+            raise ValueError(f"Lỗi khi lấy API key: {str(e)}")
 
     def _initialize_client(self) -> None:
         try:

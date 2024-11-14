@@ -1,7 +1,7 @@
 import streamlit as st
-from src.controllers.chat_controller import ChatController
-from src.views.ui import create_chat_ui
-from src.utils.config import ConfigManager, SystemPromptsManager
+from controllers.chat_controller import ChatController
+from views.ui import create_chat_ui
+from utils.config import ConfigManager, SystemPromptsManager
 
 def main():
     try:
